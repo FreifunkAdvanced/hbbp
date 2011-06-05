@@ -77,9 +77,9 @@ int main(int argc, char *argv[], char *envp[])
       // decode packet & launch handler
       buf[numbytes] = '\0';
       char *task = buf,
-	*cl_argv[3] = {buf, (strlen(task)<numbytes) ? (buf+strlen(task)+1) : NULL, NULL };
+	*cl_argv[3] = {task, (strlen(task)<numbytes) ? (buf+strlen(task)+1) : NULL, NULL };
 
-      if (buf[0] == '/' || strstr(buf, "..")) {
+      if (task[0] == '/' || strstr(task, "..")) {
 	fprintf(stderr, "payload tried directory traversal\n");
 	continue;
       }
