@@ -13,9 +13,7 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 
-#define MYPORT "4950"    // the port users will be connecting to
-
-#define MAXBUFLEN 100
+#include "common.h"
 
 // get sockaddr, IPv4 or IPv6:
 void *get_in_addr(struct sockaddr *sa)
@@ -27,7 +25,7 @@ void *get_in_addr(struct sockaddr *sa)
     return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
 
-int main(void)
+int main(int argc, char *argv[], char *envp[])
 {
     int sockfd;
     struct addrinfo hints, *servinfo, *p;
@@ -43,7 +41,7 @@ int main(void)
     hints.ai_socktype = SOCK_DGRAM;
     hints.ai_flags = AI_PASSIVE; // use my IP
 
-    if ((rv = getaddrinfo(NULL, MYPORT, &hints, &servinfo)) != 0) {
+    if ((rv = getaddrinfo(NULL, SERVERPORT_S, &hints, &servinfo)) != 0) {
         fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
         return 1;
     }
@@ -74,16 +72,34 @@ int main(void)
 
 
     addr_len = sizeof their_addr;
-    if ((numbytes = recvfrom(sockfd, buf, MAXBUFLEN-1 , 0,
-        (struct sockaddr *)&their_addr, &addr_len)) == -1) {
-        perror("recvfrom");
-        exit(1);
+    while ((numbytes = recvfrom(sockfd, buf, MAXBUFLEN-1 , 0,
+           (struct sockaddr *)&their_addr, &addr_len)) != -1) {
+      // decode packet & launch handler
+      buf[numbytes] = '\0';
+      char *task = buf,
+	*cl_argv[3] = {buf, (strlen(task)<numbytes) ? (buf+strlen(task)+1) : NULL, NULL };
+
+      if (buf[0] == '/' || strstr(buf, "..")) {
+	fprintf(stderr, "payload tried directory traversal\n");
+	continue;
+      }
+
+      switch (fork()) {
+      case 0:
+	// TODO: clean file descriptors
+	execve(task, cl_argv, envp);
+	perror("exec");
+	exit(-1);
+      case -1:
+	perror("fork (serious!)");
+	exit(-1);
+      default:
+	wait();
+      }
     }
 
-    buf[numbytes] = '\0';
-    printf("%s\n", buf);
-
+    perror("recvfrom");
     close(sockfd);
 
-    return 0;
+    return -1;
 }

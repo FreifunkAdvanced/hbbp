@@ -14,7 +14,7 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 
-#define SERVERPORT 4950    // the port users will be connecting to
+#include "common.h"
 
 int main(int argc, char *argv[])
 {
@@ -23,12 +23,24 @@ int main(int argc, char *argv[])
     struct hostent *he;
     int numbytes;
     int broadcast = 1;
-    //char broadcast = '1'; // if that doesn't work, try this
 
-    if (argc != 3) {
-        fprintf(stderr,"usage: broadcaster hostname message\n");
+    // assemble packet
+    if (argc < 3 || argc > 4) {
+        fprintf(stderr,"usage: broadcaster hostname task [message]\n");
         exit(1);
     }
+    char buf[MAXBUFLEN],
+      *task = argv[2],
+      *message = (argc == 4) ? argv[3] : NULL;
+    int task_len = strlen(task),
+      total_len = task_len + 1 + strlen(message);
+    if (total_len > MAXBUFLEN) {
+      fprintf(stderr,"payload to long: max %d bytes, was %d\n", MAXBUFLEN, total_len);
+      exit(-1);
+    }
+    strcpy(buf, task);
+    buf[task_len] = 0;
+    strcpy(buf + 1 + task_len, message);
 
     if ((he=gethostbyname(argv[1])) == NULL) {  // get the host info
         perror("gethostbyname");
@@ -52,7 +64,7 @@ int main(int argc, char *argv[])
     their_addr.sin_addr = *((struct in_addr *)he->h_addr);
     memset(their_addr.sin_zero, '\0', sizeof their_addr.sin_zero);
 
-    if ((numbytes=sendto(sockfd, argv[2], strlen(argv[2]), 0,
+    if ((numbytes=sendto(sockfd, buf, total_len, 0,
              (struct sockaddr *)&their_addr, sizeof their_addr)) == -1) {
         perror("sendto");
         exit(1);
