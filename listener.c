@@ -70,7 +70,7 @@ int main(int argc, char *argv[], char *envp[])
 
     freeaddrinfo(servinfo);
 
-
+    // receive loop
     addr_len = sizeof their_addr;
     while ((numbytes = recvfrom(sockfd, buf, MAXBUFLEN-1 , 0,
            (struct sockaddr *)&their_addr, &addr_len)) != -1) {
@@ -86,7 +86,7 @@ int main(int argc, char *argv[], char *envp[])
 
       switch (fork()) {
       case 0:
-	// TODO: clean file descriptors
+	close(sockfd); // close socket handler, leave std io
 	execve(task, cl_argv, envp);
 	perror("exec");
 	exit(-1);
@@ -99,7 +99,6 @@ int main(int argc, char *argv[], char *envp[])
     }
 
     perror("recvfrom");
-    close(sockfd);
 
     return -1;
 }
