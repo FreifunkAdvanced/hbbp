@@ -36,7 +36,7 @@ int main(int argc, char *argv[])
       total_len = task_len + 1 + strlen(message);
     if (total_len > MAXBUFLEN) {
       fprintf(stderr,"payload to long: max %d bytes, was %d\n", MAXBUFLEN, total_len);
-      exit(-1);
+      exit(1);
     }
     strcpy(buf, task);
     buf[task_len] = 0;
@@ -69,11 +69,6 @@ int main(int argc, char *argv[])
         perror("sendto");
         exit(1);
     }
-
-    printf("sent %d bytes to %s\n", numbytes,
-        inet_ntoa(their_addr.sin_addr));
-
-    close(sockfd);
 
     return 0;
 }
