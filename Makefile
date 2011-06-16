@@ -15,7 +15,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/udp-broadcast
   SECTION:=base
   CATEGORY:=Network
-  DEFAULT:=y
+  DEFAULT:=n
   TITLE:=UDP broadcast utility
   DESCRIPTION:=UDP broadcast utility\\\
     send and recive udp broadcast\\\
