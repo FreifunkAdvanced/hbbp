@@ -70,6 +70,21 @@ int main(int argc, char *argv[], char *envp[])
 
     freeaddrinfo(servinfo);
 
+    // daemonize
+#ifndef DEBUG
+    switch (fork()) {
+    case 0:
+      setsid();
+      umask(0);
+      break;
+    case -1:
+      perror("fork (serious!)");
+      exit(-1);
+    default:
+      exit(0);
+    }
+#endif
+
     // receive loop
     addr_len = sizeof their_addr;
     while ((numbytes = recvfrom(sockfd, buf, MAXBUFLEN-1 , 0,
