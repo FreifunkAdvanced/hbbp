@@ -5,17 +5,17 @@ PKG_VERSION:=1.0.0
 PKG_RELEASE:=1
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/udp-broadcast-$(PKG_VERSION)
-PKG_SOURCE:=udp-broadcas-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=@SF/udp-broadcas
+PKG_SOURCE:=udp-broadcast-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=@SF/udp-broadcast
 PKG_MD5SUM:=9b7dc52656f5cbec846a7ba3299f73bd
 PKG_CAT:=zcat
 
 include $(INCLUDE_DIR)/package.mk
 
-define Package/bridge
+define Package/udp-broadcast
   SECTION:=base
   CATEGORY:=Network
-  DEFAULT:=y
+  DEFAULT:=n
   TITLE:=UDP broadcast utility
   DESCRIPTION:=UDP broadcast utility\\\
     send and recive udp broadcast\\\
