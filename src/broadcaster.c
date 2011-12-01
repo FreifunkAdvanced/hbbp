@@ -3,35 +3,22 @@
 **                  this one can broadcast
 */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <errno.h>
-#include <string.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <netdb.h>
-
 #include "common.h"
 
-int main(int argc, char *argv[])
+int main(int argc, char **argv)
 {
-    int sockfd;
-    struct sockaddr_in their_addr; // connector's address information
-    struct hostent *he;
-    int numbytes;
+    int fd;
+    struct sockaddr_in6 addr;
     int broadcast = 1;
 
-    // assemble packet
+    /* assemble packet, parse cmd line */
     if (argc < 3 || argc > 4) {
-        fprintf(stderr,"usage: broadcaster hostname task [message]\n");
-        exit(1);
+      fprintf(stderr, "usage: %s interface task [message]\n", argv[0]);
+      exit(1);
     }
     char buf[MAXBUFLEN],
       *task = argv[2],
-      *message = (argc == 4) ? argv[3] : NULL;
+      *message = (argc == 4) ? argv[3] : "";
     int task_len = strlen(task),
       total_len = task_len + 1 + strlen(message);
     if (total_len > MAXBUFLEN) {
@@ -42,30 +29,23 @@ int main(int argc, char *argv[])
     buf[task_len] = 0;
     strcpy(buf + 1 + task_len, message);
 
-    if ((he=gethostbyname(argv[1])) == NULL) {  // get the host info
-        perror("gethostbyname");
-        exit(1);
-    }
-
-    if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) == -1) {
+    /* setup socket */
+    if ((fd = socket(AF_INET6, SOCK_DGRAM, 0)) == -1) {
         perror("socket");
         exit(1);
     }
 
-    // this call is what allows broadcast packets to be sent:
-    if (setsockopt(sockfd, SOL_SOCKET, SO_BROADCAST, &broadcast,
-        sizeof broadcast) == -1) {
-        perror("setsockopt (SO_BROADCAST)");
-        exit(1);
+    addr.sin6_family = AF_INET6;
+    addr.sin6_port = htons(SERVERPORT);
+    addr.sin6_flowinfo = 0;
+    inet_pton(AF_INET6, "ff02::1", &(addr.sin6_addr));
+    if ((addr.sin6_scope_id = if_nametoindex(argv[1])) == 0) {
+      fprintf(stderr, "interface not found\n");
+      exit(1);
     }
 
-    their_addr.sin_family = AF_INET;     // host byte order
-    their_addr.sin_port = htons(SERVERPORT); // short, network byte order
-    their_addr.sin_addr = *((struct in_addr *)he->h_addr);
-    memset(their_addr.sin_zero, '\0', sizeof their_addr.sin_zero);
-
-    if ((numbytes=sendto(sockfd, buf, total_len, 0,
-             (struct sockaddr *)&their_addr, sizeof their_addr)) == -1) {
+    /* send packet */
+    if (sendto(fd, buf, total_len, 0, (struct sockaddr *)&addr, sizeof addr) == -1) {
         perror("sendto");
         exit(1);
     }
