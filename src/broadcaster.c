@@ -26,10 +26,14 @@ int main(int argc, char **argv)
     if (strcmp(message, "-") == 0) {
       /* read payload from stdin */
       int i;
-      while ((MAXBUFLEN-total_len > 0)
-	     && ((i = read(0, &(buf[total_len]), MAXBUFLEN-total_len)) > 0))
+      while ((MAXBUFLEN - total_len - 1 > 0)
+	     && ((i = read(0, &(buf[total_len]), MAXBUFLEN - total_len - 1)) > 0))
 	total_len += i;
       ENP(i, "read(stdin)");
+      if (read(0, &i, 1) != 0) {
+	fprintf(stderr, "payload to long: max %d bytes\n", MAXBUFLEN - 1);
+	exit(1);
+      }
     }else{
       /* use cmd line for payload */
       total_len += strlen(message);
@@ -37,7 +41,8 @@ int main(int argc, char **argv)
 	strcpy(buf + 1 + task_len, message);
     }
     if (total_len > MAXBUFLEN) {
-      fprintf(stderr,"payload to long: max %d bytes, was %d\n", MAXBUFLEN, total_len);
+      fprintf(stderr,"payload to long: max %d bytes, was %d\n",
+	      MAXBUFLEN - 1, total_len);
       exit(1);
     }
 
