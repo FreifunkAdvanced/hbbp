@@ -65,12 +65,12 @@ int main(int argc, char **argv, char **envp) {
     }
 
     int fd_payload[2];
-    pipe(fd_payload);
+    ENP(pipe(fd_payload), "pipe");
       
     switch (fork()) {
     case 0:
       /* redirect payload to stdio, leave stdout/err, close the rest */
-      ENP(dup(fd_payload[0], 1), "dup");
+      ENP(dup2(fd_payload[0], 0), "dup");
       ENP(close(fd_payload[0]),  "close");
       ENP(close(fd_payload[1]),  "close");
       ENP(close(fd),             "close");
@@ -82,17 +82,19 @@ int main(int argc, char **argv, char **envp) {
     case -1:
       perror("fork");
       exit(1);
-    default:
-      ENP(wait(), "wait");
     }
 
     /* write payload to child process; the return value of write is
        intentionally ignored */
     int tasklen = strlen(task);
-    if (tasklen < numbytes)
+    fprintf(stderr, "extra payload %d %d\n", tasklen, numbytes);
+    if (tasklen < numbytes) {
       write(fd_payload[1], buf + tasklen + 1, numbytes - tasklen - 1);
+      write(1, buf + tasklen + 1, numbytes - tasklen - 1);
+    }
     ENP(close(fd_payload[1]), "close");
     ENP(close(fd_payload[0]), "close");
+    ENP(wait(), "wait");
   }
     
   perror("recvfrom");
