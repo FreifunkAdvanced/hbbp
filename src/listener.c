@@ -87,14 +87,11 @@ int main(int argc, char **argv, char **envp) {
     /* write payload to child process; the return value of write is
        intentionally ignored */
     int tasklen = strlen(task);
-    fprintf(stderr, "extra payload %d %d\n", tasklen, numbytes);
-    if (tasklen < numbytes) {
+    if (tasklen < numbytes)
       write(fd_payload[1], buf + tasklen + 1, numbytes - tasklen - 1);
-      write(1, buf + tasklen + 1, numbytes - tasklen - 1);
-    }
     ENP(close(fd_payload[1]), "close");
     ENP(close(fd_payload[0]), "close");
-    ENP(wait(), "wait");
+    ENP(wait(NULL), "wait");
   }
     
   perror("recvfrom");
