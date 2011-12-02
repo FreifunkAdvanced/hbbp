@@ -4,6 +4,8 @@
 
 LOGFILE="./hello.log"
 
-echo "Someone called 'hello $1'!" >> "$LOGFILE"
-
+(   echo -n "Someone called 'hello "
+    cat
+    echo  "'!"
+) >> "$LOGFILE"
 

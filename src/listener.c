@@ -64,16 +64,24 @@ int main(int argc, char **argv, char **envp) {
     /* decode packet & launch handler */
     buf[numbytes] = '\0';
     char *task = buf,
-      *cl_argv[3] = {task, (strlen(task)<numbytes) ? (buf+strlen(task)+1) : NULL, NULL };
-      
+      *cl_argv[2] = {task, NULL};
     if (task[0] == '/' || strstr(task, "..")) {
       fprintf(stderr, "payload tried directory traversal\n");
       continue;
     }
+
+    int fd_payload[2];
+    pipe(fd_payload);
       
     switch (fork()) {
     case 0:
-      close(fd); // close socket handler, leave std io
+      /* redirect payload to stdio, leave stdout/err, close the rest */
+      dup(fd_payload[0], 1);
+      close(fd_payload[0]);
+      close(fd_payload[1]);
+      close(fd);
+
+      /* run our task task */
       execve(task, cl_argv, envp);
       perror("exec");
       exit(1);
@@ -83,6 +91,13 @@ int main(int argc, char **argv, char **envp) {
     default:
       wait();
     }
+
+    /* write payload to child process */
+    int tasklen = strlen(task);
+    if (tasklen < numbytes)
+      write(fd_payload[1], buf + tasklen + 1, numbytes - tasklen - 1);
+    close(fd_payload[1]);
+    close(fd_payload[0]);
   }
     
   perror("recvfrom");

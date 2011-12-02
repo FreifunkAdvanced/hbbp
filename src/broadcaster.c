@@ -13,21 +13,36 @@ int main(int argc, char **argv)
 
     /* assemble packet, parse cmd line */
     if (argc < 3 || argc > 4) {
-      fprintf(stderr, "usage: %s interface task [message]\n", argv[0]);
+      fprintf(stderr, "usage: %s interface task [message|-]\n", argv[0]);
       exit(1);
     }
     char buf[MAXBUFLEN],
       *task = argv[2],
       *message = (argc == 4) ? argv[3] : "";
     int task_len = strlen(task),
-      total_len = task_len + 1 + strlen(message);
+      total_len = task_len + 1;
+    strcpy(buf, task);
+    buf[task_len] = 0;
+    if (strcmp(message, "-") == 0) {
+      /* read payload from stdin */
+      int i;
+      while ((MAXBUFLEN-total_len > 0)
+	     && ((i = read(0, &(buf[total_len]), MAXBUFLEN-total_len)) > 0))
+	total_len += i;
+      if (i < 0) {
+	perror("read(stdin)");
+	exit(1);
+      }
+    }else{
+      /* use cmd line for payload */
+      total_len += strlen(message);
+      if (total_len <= MAXBUFLEN)
+	strcpy(buf + 1 + task_len, message);
+    }
     if (total_len > MAXBUFLEN) {
       fprintf(stderr,"payload to long: max %d bytes, was %d\n", MAXBUFLEN, total_len);
       exit(1);
     }
-    strcpy(buf, task);
-    buf[task_len] = 0;
-    strcpy(buf + 1 + task_len, message);
 
     /* setup socket */
     if ((fd = socket(AF_INET6, SOCK_DGRAM, 0)) == -1) {
