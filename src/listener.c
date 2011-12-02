@@ -19,10 +19,7 @@ int main(int argc, char **argv, char **envp) {
       fprintf(stderr, "usage: %s [interface]\n", argv[0]);
       exit(1);
     }
-    if ((fd = socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
-      perror("listener: socket");
-      exit(1);
-    }
+    ENP((fd = socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP)), "listener: socket");
     if (argc == 2) {
       inet_pton(AF_INET6, "ff02::1", &(ba.sin6_addr));
       if ((ba.sin6_scope_id = if_nametoindex(argv[1])) == 0) {
@@ -36,17 +33,14 @@ int main(int argc, char **argv, char **envp) {
     ba.sin6_family = AF_INET6;
     ba.sin6_port = htons(SERVERPORT);
     ba.sin6_flowinfo = 0;
-    if (bind(fd, (struct sockaddr*) &ba, sizeof ba) != 0) {
-      perror("listener: bind");
-      exit(1);
-    }
+    ENP(bind(fd, (struct sockaddr*) &ba, sizeof ba), "listener: bind");
   }
 
   /* daemonize */
 #ifndef DEBUG
   switch (fork()) {
   case 0:
-    setsid();
+    ENP(setsid(), "setsid");
     umask(0);
     break;
   case -1:
@@ -76,10 +70,10 @@ int main(int argc, char **argv, char **envp) {
     switch (fork()) {
     case 0:
       /* redirect payload to stdio, leave stdout/err, close the rest */
-      dup(fd_payload[0], 1);
-      close(fd_payload[0]);
-      close(fd_payload[1]);
-      close(fd);
+      ENP(dup(fd_payload[0], 1), "dup");
+      ENP(close(fd_payload[0]),  "close");
+      ENP(close(fd_payload[1]),  "close");
+      ENP(close(fd),             "close");
 
       /* run our task task */
       execve(task, cl_argv, envp);
@@ -89,18 +83,18 @@ int main(int argc, char **argv, char **envp) {
       perror("fork");
       exit(1);
     default:
-      wait();
+      ENP(wait(), "wait");
     }
 
-    /* write payload to child process */
+    /* write payload to child process; the return value of write is
+       intentionally ignored */
     int tasklen = strlen(task);
     if (tasklen < numbytes)
       write(fd_payload[1], buf + tasklen + 1, numbytes - tasklen - 1);
-    close(fd_payload[1]);
-    close(fd_payload[0]);
+    ENP(close(fd_payload[1]), "close");
+    ENP(close(fd_payload[0]), "close");
   }
     
   perror("recvfrom");
-    
   return 1;
 }

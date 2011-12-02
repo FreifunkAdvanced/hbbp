@@ -29,10 +29,7 @@ int main(int argc, char **argv)
       while ((MAXBUFLEN-total_len > 0)
 	     && ((i = read(0, &(buf[total_len]), MAXBUFLEN-total_len)) > 0))
 	total_len += i;
-      if (i < 0) {
-	perror("read(stdin)");
-	exit(1);
-      }
+      ENP(i, "read(stdin)");
     }else{
       /* use cmd line for payload */
       total_len += strlen(message);
@@ -45,11 +42,7 @@ int main(int argc, char **argv)
     }
 
     /* setup socket */
-    if ((fd = socket(AF_INET6, SOCK_DGRAM, 0)) == -1) {
-        perror("socket");
-        exit(1);
-    }
-
+    ENP((fd = socket(AF_INET6, SOCK_DGRAM, 0)), "socket");
     addr.sin6_family = AF_INET6;
     addr.sin6_port = htons(SERVERPORT);
     addr.sin6_flowinfo = 0;
@@ -60,10 +53,8 @@ int main(int argc, char **argv)
     }
 
     /* send packet */
-    if (sendto(fd, buf, total_len, 0, (struct sockaddr *)&addr, sizeof addr) == -1) {
-        perror("sendto");
-        exit(1);
-    }
+    ENP(sendto(fd, buf, total_len, 0, (struct sockaddr *) &addr, sizeof addr), 
+	"sendto");
 
     return 0;
 }

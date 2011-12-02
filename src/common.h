@@ -14,4 +14,10 @@
 #define SERVERPORT_S "4950"
 #define MAXBUFLEN 100
 
+#define ENP(Cmd, Msg) \
+  if ((Cmd) == -1) {		\
+    perror(Msg);		\
+    exit(1);			\
+  }
+
 #endif // UDP_BROADCAST_COMMON
