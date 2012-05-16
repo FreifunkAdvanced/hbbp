@@ -1,5 +1,7 @@
-all: broadcaster listener
+BIN=hbbpd hbbpc
+
+all: $(BIN)
 
 .PHONY: clean
 clean:
-	rm -f broadcaster listener *~
+	rm -f $(BIN) *~
