@@ -1,3 +1,10 @@
+As receiver:
+cd example/handler
+HBBP_KEYDIR=../keys strace ../../hbbpd
+
+As sender:
+HBBP_KEYDIR=example/keys/ ./hbbpc eth0 hello world
+
 * packet structure
 ** no encryption, empty payload
    - task
