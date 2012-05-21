@@ -1,10 +1,22 @@
 BIN=hbbpd hbbpc
+ 
+ifndef EXTERNAL_NACL
+CFLAGS  += -Inacl/include/
+LDFLAGS += -Lnacl/lib/
+NACL_DEP = nacl/include
+endif
+
+CFLAGS +=-std=c99 -Wall -Wextra -fwhole-program -Os
+LDFLAGS +=-lnacl nacl/lib/randombytes.o
 
 all: $(BIN)
 
 .PHONY: clean
 clean:
 	rm -f $(BIN) *~
+
+%: %.c common.h crypto.h $(NACL_DEP)
+	$(CC) -o $@ $< $(LDFLAGS) $(CFLAGS)
 
 nacl/include:
 	mkdir nacl

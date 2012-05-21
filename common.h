@@ -9,6 +9,10 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <net/if.h>
+#include <unistd.h>
+
+typedef unsigned char byte;
 
 /* the port users will be connecting to */
 #define SERVERPORT 4950
@@ -24,5 +28,14 @@
     perror(Msg);		\
     exit(1);			\
   }
+
+#define E0P(Cmd, Msg) \
+  if ((Cmd) == NULL) {		\
+    perror(Msg);		\
+    exit(1);			\
+  }
+
+#define IGN(Cmd) \
+  if (Cmd) {}
 
 #endif // UDP_BROADCAST_COMMON

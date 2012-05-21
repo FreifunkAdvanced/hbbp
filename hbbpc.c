@@ -4,12 +4,12 @@
 */
 
 #include "common.h"
+#include "crypto.h"
 
 int main(int argc, char **argv)
 {
     int fd;
     struct sockaddr_in6 addr;
-    int broadcast = 1;
 
     /* assemble packet, parse cmd line */
     if (argc < 3 || argc > 4) {
@@ -20,13 +20,14 @@ int main(int argc, char **argv)
       *task = argv[2],
       *message = (argc == 4) ? argv[3] : "";
     int task_len = strlen(task),
-      total_len = task_len + 1;
+      msg_len = 0, total_len;
     strcpy(buf, task);
     buf[task_len] = 0;
+    /* TODO: recheck paragraph for off-by-one errors */
     if (strcmp(message, "-") == 0) {
       /* read payload from stdin */
       int i;
-      while ((MAXBUFLEN - total_len - 1 > 0)
+      while (((total_len = task_len + msg_len + 1) < MAXBUFLEN - 1)
 	     && ((i = read(0, &(buf[total_len]), MAXBUFLEN - total_len - 1)) > 0))
 	total_len += i;
       ENP(i, "read(stdin)");
@@ -36,15 +37,23 @@ int main(int argc, char **argv)
       }
     }else{
       /* use cmd line for payload */
-      total_len += strlen(message);
-      if (total_len <= MAXBUFLEN)
+      msg_len = strlen(message);
+      if ((total_len = task_len + msg_len + 1) < MAXBUFLEN - 1)
 	strcpy(buf + 1 + task_len, message);
     }
-    if (total_len > MAXBUFLEN) {
+    if ((total_len = task_len + msg_len + 1) >= MAXBUFLEN - 1) {
       fprintf(stderr,"payload to long: max %d bytes, was %d\n",
 	      MAXBUFLEN - 1, total_len);
       exit(1);
     }
+
+    /* (potentially) encrypt payload */
+    char *err_msg = encipher(task, (byte*) buf + task_len + 1, &msg_len);
+    if (err_msg != NULL) {
+      fprintf(stderr, "%s\n", err_msg);
+      exit(1);
+    }
+    total_len = task_len + msg_len + 1;
 
     /* setup socket */
     ENP((fd = socket(AF_INET6, SOCK_DGRAM, 0)), "socket");
