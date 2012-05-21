@@ -1,15 +1,13 @@
-ifndef BIN
 BIN=hbbpd hbbpc hbbp_keygen
-endif
 
 ifndef EXTERNAL_NACL
-CFLAGS  += -Inacl/include/
-LDFLAGS += -Lnacl/lib/
+override CFLAGS  += -Inacl/include/
+override LDFLAGS += -Lnacl/lib/
 NACL_DEP = nacl/include
 endif
 
-CFLAGS +=-std=c99 -Wall -Wextra -fwhole-program -Os
-LDFLAGS +=-lnacl nacl/lib/randombytes.o
+override CFLAGS +=-std=c99 -Wall -Wextra -fwhole-program -Os
+override LDFLAGS +=-lnacl
 
 all: $(BIN)
 
