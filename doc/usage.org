@@ -1,0 +1,55 @@
+* packet structure
+** no encryption, empty payload
+   - task
+
+   This packet type is not send by hbbpc, but accepted by hbbpd.
+** no encryption
+   - task
+   - '\0'
+   - payload (may be empty)
+** encryption
+   - task
+   - '\0'
+   - nonce
+   - encrypted payload (may be empty)
+* cryptography
+  HBBP uses the elliptic curve based assymetric cryptography to
+  - limit the sender
+  - limit the receiver
+  to those peers that have knowledge of the corresponding keys. There
+  is no protection against replay attacks.
+
+  The sender (hbbpc) needs the senders private key (send.priv) and the
+  receivers public key (recv.pub). The receiver needs the senders
+  public key (send.pub) and the receivers private key (recv.priv).
+
+  These key files are searched in the directory $base/$task where
+  $base is the value of the environment variable HBBP_KEYDIR or
+  /etc/hbbp/keys (the former takes precedence). If a key is not found
+  in this directory, it is searched in $base/default.
+
+  Note that this search is executed for each individual key. This
+  allows to selectively overwrite default keys with task specific
+  keys. Keep in mind that for each task only one key-pair (2 private &
+  two public keys!) must be used in the entire network: The receiver
+  assumes a certain sender key only be looking at the packets task
+  name.
+
+  To create keys use the accompanied hbbp_keygen in the desired
+  destination directory. It will not overwrite any existing keys.
+
+** key deployment examples
+*** peer to peer as default
+*** priviledged sender with fully overwritten defaults
+*** priviliedged receiver with partially overwritten defaults
+
+* software security
+  - at most one task handler running at any time (wait for child
+    termination)
+  - no heap allocations at all
+  - bounded stack
+  - all syscall return codes checked, abort program in case of
+    unhandled condition
+  - in case of doubt: terminate (use watchdog for availability!)
+  - compiled with -Wall -Wextra without generating any warnings
+  - small codebase
