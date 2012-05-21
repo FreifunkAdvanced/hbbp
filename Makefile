@@ -1,5 +1,7 @@
-BIN=hbbpd hbbpc
- 
+ifndef BIN
+BIN=hbbpd hbbpc hbbp_keygen
+endif
+
 ifndef EXTERNAL_NACL
 CFLAGS  += -Inacl/include/
 LDFLAGS += -Lnacl/lib/
