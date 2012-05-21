@@ -2,8 +2,8 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+#include "common.h"
 #include "crypto.h"
-
 
 #define pub_len  crypto_box_PUBLICKEYBYTES
 #define priv_len crypto_box_SECRETKEYBYTES
@@ -14,6 +14,27 @@ void error_cleanup(int num) {
     for (int i = 0; i < num; i++)
 	unlink(name[i]);
     exit(1);
+}
+
+// used by nacl's crypto_box_keypair
+void randombytes(byte *buf, unsigned long long len)
+  __attribute__ ((externally_visible));
+
+void randombytes(byte *buf, unsigned long long len) {
+  int fd = open("/dev/urandom", O_RDONLY);
+  if (fd == -1) goto error;
+
+  while (len > 0) {
+    int sz = read(fd, buf, len);
+    if (sz < 1) goto error;
+    buf += sz;
+    len -= sz;
+  }
+  return;
+
+ error:
+  perror("failed accessing /dev/urandom");
+  error_cleanup(4);
 }
 
 int main() {
