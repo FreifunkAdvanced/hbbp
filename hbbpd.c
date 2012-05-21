@@ -1,7 +1,3 @@
-/*
-** listener.c -- a datagram sockets "server" demo
-*/
-
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/wait.h>

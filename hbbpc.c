@@ -1,8 +1,3 @@
-/*
-** broadcaster.c -- a datagram "client" like talker.c, except
-**                  this one can broadcast
-*/
-
 #include "common.h"
 #include "crypto.h"
 
