@@ -15,7 +15,10 @@ all: $(BIN)
 
 .PHONY: clean
 clean:
-	rm -f $(BIN) *~
+	-rm $(BIN) *~
+
+distclean: clean
+	-rm -r nacl
 
 %: %.c common.h crypto.h $(NACL_DEP)
 	$(CC) -o $@ $< $(LDFLAGS) $(CFLAGS)
