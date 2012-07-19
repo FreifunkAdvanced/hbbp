@@ -1,4 +1,4 @@
-BIN=hbbpd hbbpc hbbp_keygen
+BIN=hbbpd hbbpc hbbp_keygen hbbpp
 
 ifndef EXTERNAL_NACL
 override CFLAGS  += -Inacl/include/
